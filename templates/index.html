@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân loại ảnh</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for drop zone */
+        #drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        #drop-zone.hover {
+            border-color: #333;
+        }
+
+        /* Ensure footer stays at the bottom */
+        html, body {
+            height: 100%;
+        }
+        .content {
+            flex: 1;
+        }
+
+        /* Custom styles for results container */
+        .result-container {
+            display: flex;
+            overflow-x: auto; /* Allow horizontal scrolling */
+            padding: 10px;
+            gap: 20px;
+            flex-wrap: nowrap; /* Prevent wrapping */
+        }
+        .result-item {
+            flex: 0 0 auto;
+            text-align: center;
+            width: 250px; /* Adjust width as needed */
+        }
+        .result-item img {
+            max-width: 100%;
+            height: auto;
+        }
+        .underline {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="container mt-4 flex-grow-1 content">
+        <h2 class="text-center mb-4">Tải Lên và Phân Loại Ảnh</h2>
+        <div id="drop-zone" class="mb-4">
+            Kéo và thả các hình ảnh vào đây (tối đa 10 ảnh)
+        </div>
+        
+        <!-- Thêm hai nút Kiểm tra và Làm lại -->
+        <div class="text-center mb-4">
+            <button id="checkBtn" class="btn btn-primary mr-2" disabled>Kiểm tra</button>
+        </div>
+        
+        <div id="response" class="result-container">
+            <!-- Results will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center py-3 mt-auto">
+        <p class="mb-0">
+            Dự án phân loại hình ảnh được thực hiện bởi <span class="underline">Nguyễn Thị Sen</span> và <span class="underline">Đào Văn Đôi</span>
+        </p>
+    </footer>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const responseDiv = document.getElementById('response');
+        const checkBtn = document.getElementById('checkBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        let selectedFiles = [];
+
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('hover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('hover');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('hover');
+            const files = event.dataTransfer.files;
+            if (files.length > 10) {
+                responseDiv.textContent = 'Chỉ cho phép tối đa 10 ảnh';
+                return;
+            }
+            selectedFiles = Array.from(files); // Lưu trữ các file đã chọn
+            checkBtn.disabled = false; // Kích hoạt nút "Kiểm tra"
+            responseDiv.textContent = 'Bạn đã chọn ' + selectedFiles.length + ' ảnh';
+        });
+
+        checkBtn.addEventListener('click', () => {
+            if (selectedFiles.length === 0) {
+                responseDiv.textContent = 'Vui lòng tải lên ít nhất một ảnh.';
+                return;
+            }
+            uploadFiles(selectedFiles);
+        });
+
+        function uploadFiles(files) {
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('file', file);
+            }
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json().catch(() => {
+                throw new Error('Invalid JSON response');
+            }))
+            .then(data => {
+                if (data.error) {
+                    responseDiv.textContent = 'Lỗi: ' + data.error;
+                } else {
+                    displayResults(data.results);
+                }
+            })
+            .catch(error => {
+                responseDiv.textContent = 'Đã xảy ra lỗi: ' + error;
+            });
+        }
+
+        function displayResults(results) {
+            responseDiv.innerHTML = '';
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'result-item card p-3';
+                div.style.width = '200px'; // Adjust width as needed
+                div.innerHTML = `
+                    <h5 class="card-title">${result.name}</h5>
+                    <p class="card-text"><strong>Dự đoán:</strong> ${result.prediction}</p>
+                    <img src="${result.filename}" class="card-img-top" alt="Uploaded Image">
+                `;
+                responseDiv.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>

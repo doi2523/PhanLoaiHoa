@@ -1,0 +1,7 @@
+tensorflow
+flask
+pillow
+numpy
+Pillow
+scipy
+# pip install -r requirements.txt
