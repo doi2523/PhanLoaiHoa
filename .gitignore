@@ -3,3 +3,4 @@ train/
 test/
 .venv/
 flowers_model.keras
+uploads/

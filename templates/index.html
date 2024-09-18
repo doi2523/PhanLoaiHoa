@@ -56,10 +56,11 @@
         <div id="drop-zone" class="mb-4">
             Kéo và thả các hình ảnh vào đây (tối đa 10 ảnh)
         </div>
-        
-        <!-- Thêm hai nút Kiểm tra và Làm lại -->
+        <!-- File input and button -->
         <div class="text-center mb-4">
-            <button id="checkBtn" class="btn btn-primary mr-2" disabled>Kiểm tra</button>
+            <input type="file" id="file-input" multiple style="display: none;">
+            <button id="selectFilesBtn" class="btn btn-secondary">Chọn tệp</button>
+            <button id="checkBtn" class="btn btn-primary ml-2" disabled>Kiểm tra</button>
         </div>
         
         <div id="response" class="result-container">
@@ -81,9 +82,10 @@
 
     <script>
         const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const selectFilesBtn = document.getElementById('selectFilesBtn');
         const responseDiv = document.getElementById('response');
         const checkBtn = document.getElementById('checkBtn');
-        const resetBtn = document.getElementById('resetBtn');
         let selectedFiles = [];
 
         dropZone.addEventListener('dragover', (event) => {
@@ -99,6 +101,21 @@
             event.preventDefault();
             dropZone.classList.remove('hover');
             const files = event.dataTransfer.files;
+            if (files.length > 10) {
+                responseDiv.textContent = 'Chỉ cho phép tối đa 10 ảnh';
+                return;
+            }
+            selectedFiles = Array.from(files); // Lưu trữ các file đã chọn
+            checkBtn.disabled = false; // Kích hoạt nút "Kiểm tra"
+            responseDiv.textContent = 'Bạn đã chọn ' + selectedFiles.length + ' ảnh';
+        });
+
+        selectFilesBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            const files = fileInput.files;
             if (files.length > 10) {
                 responseDiv.textContent = 'Chỉ cho phép tối đa 10 ảnh';
                 return;
