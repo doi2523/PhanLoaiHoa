@@ -2,4 +2,3 @@ flowers-dataset/
 train/
 test/
 .venv/
-# flowers_model.keras
